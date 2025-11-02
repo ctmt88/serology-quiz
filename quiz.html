@@ -132,9 +132,16 @@
         }
         
         .option.selected {
-            background: #fff3cd;
-            border-color: #ffc107;
-            font-weight: bold;
+            background: #fff3cd !important;
+            border-color: #ffc107 !important;
+            font-weight: bold !important;
+        }
+        
+        /* 確保selected優先於answer-hidden */
+        .option.correct.answer-hidden.selected {
+            background: #fff3cd !important;
+            border-color: #ffc107 !important;
+            font-weight: bold !important;
         }
         
         .option.correct-answer {
@@ -525,32 +532,23 @@
         
         // 選擇選項
         function selectOption(slideIndex, optionIndex, isCorrect, event) {
-            console.log('selectOption 被調用:', { slideIndex, optionIndex, isCorrect, showAnswers });
-            
             // 如果已經顯示答案，不允許再選擇
-            if (showAnswers) {
-                console.log('已顯示答案，無法選擇');
-                return;
-            }
+            if (showAnswers) return;
             
             // 移除當前題目所有選項的selected狀態
             const currentSlideOptions = document.querySelectorAll(`.option[data-slide="${slideIndex}"]`);
-            console.log('找到選項數量:', currentSlideOptions.length);
             currentSlideOptions.forEach(opt => opt.classList.remove('selected'));
             
             // 使用 event.target 直接獲取被點擊的元素
             const selectedOption = event.target.closest('.option');
-            console.log('選中的選項:', selectedOption, '元素類名:', selectedOption ? selectedOption.className : 'null');
             
             if (selectedOption) {
                 selectedOption.classList.add('selected');
-                console.log('已添加 selected class，新類名:', selectedOption.className);
             }
             
             // 儲存用戶答案
             userAnswers[slideIndex] = { optionIndex, isCorrect };
             currentQuestionAnswered = true;
-            console.log('答案已儲存:', userAnswers[slideIndex]);
         }
         
         // 顯示反饋
