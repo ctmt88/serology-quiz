@@ -123,6 +123,99 @@
             font-weight: normal;
         }
         
+        .option.selected {
+            background: #fff3cd;
+            border-color: #ffc107;
+            font-weight: bold;
+        }
+        
+        .option.correct-answer {
+            background: #d4edda;
+            border-color: #28a745;
+            font-weight: bold;
+        }
+        
+        .option.wrong-answer {
+            background: #f8d7da;
+            border-color: #dc3545;
+            font-weight: bold;
+        }
+        
+        .feedback {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            padding: 40px 60px;
+            border-radius: 20px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+            z-index: 2000;
+            text-align: center;
+            display: none;
+            animation: fadeIn 0.3s ease;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translate(-50%, -60%); }
+            to { opacity: 1; transform: translate(-50%, -50%); }
+        }
+        
+        .feedback.show {
+            display: block;
+        }
+        
+        .feedback h2 {
+            font-size: 2.5rem;
+            margin-bottom: 15px;
+        }
+        
+        .feedback.correct h2 {
+            color: #28a745;
+        }
+        
+        .feedback.wrong h2 {
+            color: #dc3545;
+        }
+        
+        .feedback p {
+            font-size: 1.3rem;
+            color: #666;
+            margin-bottom: 20px;
+        }
+        
+        .feedback-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1999;
+            display: none;
+        }
+        
+        .feedback-overlay.show {
+            display: block;
+        }
+        
+        .feedback-btn {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 25px;
+            font-size: 1.1rem;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin: 5px;
+        }
+        
+        .feedback-btn:hover {
+            background: #5568d3;
+            transform: translateY(-2px);
+        }
+        
         .explanation-toggle {
             background: #17a2b8;
             color: white;
@@ -263,14 +356,47 @@
         .hidden {
             display: none !important;
         }
+        
+        .visit-counter-quiz {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            background: rgba(255, 255, 255, 0.95);
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            color: #666;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            z-index: 999;
+        }
+        
+        .visit-counter-quiz span {
+            font-weight: bold;
+            color: #667eea;
+        }
     </style>
 </head>
 <body>
+    <!-- 反饋彈窗 -->
+    <div class="feedback-overlay" id="feedback-overlay" onclick="closeFeedback()"></div>
+    <div class="feedback" id="feedback">
+        <h2 id="feedback-title">✓ 答對了！</h2>
+        <p id="feedback-message">太棒了！繼續保持！</p>
+        <div>
+            <button class="feedback-btn" onclick="closeFeedback()">繼續</button>
+            <button class="feedback-btn" id="show-explanation-btn" onclick="showExplanationFromFeedback()" style="display:none;">查看詳解</button>
+        </div>
+    </div>
+    
     <button class="back-btn" onclick="backToSettings()">🔄 重新設定</button>
     <button class="answer-toggle" id="answer-toggle" onclick="toggleAnswers()">顯示答案</button>
     
     <div class="slide-counter">
         <span id="current-slide">1</span> / <span id="total-slides">0</span>
+    </div>
+    
+    <div class="visit-counter-quiz">
+        👁️ <span id="visit-counter-quiz-display">567</span>
     </div>
     
     <div class="slide-container" id="slide-container">
@@ -289,6 +415,9 @@
         let currentSlide = 0;
         let totalSlides = 0;
         let showAnswers = false;
+        let userAnswers = {}; // 儲存用戶答案 {slideIndex: optionIndex}
+        let currentQuestionAnswered = false;
+        let currentCorrectIndex = -1;
         
         // 載入資料庫並初始化
         async function init() {
@@ -373,7 +502,11 @@
                     ${q.image_base64 ? `<img src="${q.image_base64}" class="question-image" alt="題目圖片">` : ''}
                     <div class="options">
                         ${shuffledOptions.map((opt, idx) => `
-                            <div class="option ${opt.isCorrect ? 'correct answer-hidden' : ''}">
+                            <div class="option ${opt.isCorrect ? 'correct answer-hidden' : ''}" 
+                                 data-slide="${index}" 
+                                 data-option="${idx}" 
+                                 data-correct="${opt.isCorrect}"
+                                 onclick="selectOption(${index}, ${idx}, ${opt.isCorrect})">
                                 (${String.fromCharCode(65 + idx)}) ${opt.content}
                             </div>
                         `).join('')}
@@ -404,9 +537,68 @@
             return newArray;
         }
         
-        // 切換答案顯示
+        // 選擇選項
+        function selectOption(slideIndex, optionIndex, isCorrect) {
+            // 如果已經顯示答案，不允許再選擇
+            if (showAnswers) return;
+            
+            // 移除當前題目所有選項的selected狀態
+            const currentSlideOptions = document.querySelectorAll(`.option[data-slide="${slideIndex}"]`);
+            currentSlideOptions.forEach(opt => opt.classList.remove('selected'));
+            
+            // 標記選中的選項
+            const selectedOption = document.querySelector(`.option[data-slide="${slideIndex}"][data-option="${optionIndex}"]`);
+            selectedOption.classList.add('selected');
+            
+            // 儲存用戶答案
+            userAnswers[slideIndex] = { optionIndex, isCorrect };
+            currentQuestionAnswered = true;
+        }
+        
+        // 顯示反饋
+        function showFeedback(isCorrect) {
+            const feedback = document.getElementById('feedback');
+            const overlay = document.getElementById('feedback-overlay');
+            const title = document.getElementById('feedback-title');
+            const message = document.getElementById('feedback-message');
+            const showExplanationBtn = document.getElementById('show-explanation-btn');
+            
+            feedback.className = 'feedback show ' + (isCorrect ? 'correct' : 'wrong');
+            overlay.classList.add('show');
+            
+            if (isCorrect) {
+                title.textContent = '✓ 答對了！';
+                message.textContent = '太棒了！繼續保持！';
+                showExplanationBtn.style.display = 'none';
+            } else {
+                title.textContent = '✗ 答錯了';
+                message.textContent = '沒關係，看看詳解再試試！';
+                showExplanationBtn.style.display = 'inline-block';
+            }
+        }
+        
+        // 關閉反饋
+        function closeFeedback() {
+            const feedback = document.getElementById('feedback');
+            const overlay = document.getElementById('feedback-overlay');
+            feedback.classList.remove('show');
+            overlay.classList.remove('show');
+        }
+        
+        // 從反饋彈窗查看詳解
+        function showExplanationFromFeedback() {
+            closeFeedback();
+            toggleExplanation(currentSlide);
+        }
+        
         // 切換答案顯示
         function toggleAnswers() {
+            // 如果用戶已選擇答案但還沒顯示答案，先檢查答案
+            if (!showAnswers && currentQuestionAnswered && userAnswers[currentSlide]) {
+                const userAnswer = userAnswers[currentSlide];
+                showFeedback(userAnswer.isCorrect);
+            }
+            
             showAnswers = !showAnswers;
             const btn = document.getElementById('answer-toggle');
             const correctOptions = document.querySelectorAll('.option.correct');
@@ -415,10 +607,28 @@
                 correctOptions.forEach(opt => opt.classList.remove('answer-hidden'));
                 btn.textContent = '隱藏答案';
                 btn.classList.add('show-answers');
+                
+                // 標記用戶選擇的答案
+                if (userAnswers[currentSlide]) {
+                    const selectedOption = document.querySelector(`.option[data-slide="${currentSlide}"][data-option="${userAnswers[currentSlide].optionIndex}"]`);
+                    if (selectedOption) {
+                        selectedOption.classList.remove('selected');
+                        if (userAnswers[currentSlide].isCorrect) {
+                            selectedOption.classList.add('correct-answer');
+                        } else {
+                            selectedOption.classList.add('wrong-answer');
+                        }
+                    }
+                }
             } else {
                 correctOptions.forEach(opt => opt.classList.add('answer-hidden'));
                 btn.textContent = '顯示答案';
                 btn.classList.remove('show-answers');
+                
+                // 移除答案標記
+                document.querySelectorAll('.option').forEach(opt => {
+                    opt.classList.remove('correct-answer', 'wrong-answer');
+                });
             }
         }
         
@@ -456,6 +666,17 @@
             
             prevBtn.disabled = currentSlide === 0;
             nextBtn.disabled = currentSlide === totalSlides - 1;
+            
+            // 更新當前題目的答題狀態
+            currentQuestionAnswered = userAnswers[currentSlide] !== undefined;
+            
+            // 恢復當前題目的選擇狀態
+            if (userAnswers[currentSlide]) {
+                const selectedOption = document.querySelector(`.option[data-slide="${currentSlide}"][data-option="${userAnswers[currentSlide].optionIndex}"]`);
+                if (selectedOption && !showAnswers) {
+                    selectedOption.classList.add('selected');
+                }
+            }
         }
         
         // 上一題
@@ -486,7 +707,27 @@
         });
         
         // 初始化
-        window.addEventListener('DOMContentLoaded', init);
+        window.addEventListener('DOMContentLoaded', function() {
+            init();
+            displayVisitCounter();
+        });
+        
+        // 顯示訪問計數
+        function displayVisitCounter() {
+            const STORAGE_KEY = 'pageVisitCount';
+            let visitCount = localStorage.getItem(STORAGE_KEY);
+            
+            if (!visitCount) {
+                visitCount = 567;
+            } else {
+                visitCount = parseInt(visitCount);
+            }
+            
+            const counterDisplay = document.getElementById('visit-counter-quiz-display');
+            if (counterDisplay) {
+                counterDisplay.textContent = visitCount.toLocaleString();
+            }
+        }
     </script>
 </body>
 </html>
