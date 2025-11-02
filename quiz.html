@@ -347,22 +347,16 @@
             container.innerHTML = '';
             
             questions.forEach((q, index) => {
-                // 構建原始選項陣列，並過濾掉空值
-                const originalOptions = [
+                // 構建選項陣列（直接使用資料庫的資料）
+                const options = [
                     { letter: 'A', content: q.option_a, isCorrect: q.correct_answer === 'A' },
                     { letter: 'B', content: q.option_b, isCorrect: q.correct_answer === 'B' },
                     { letter: 'C', content: q.option_c, isCorrect: q.correct_answer === 'C' },
                     { letter: 'D', content: q.option_d, isCorrect: q.correct_answer === 'D' }
-                ].filter(opt => opt.content && opt.content.trim() !== ''); // 過濾空選項
-                
-                // 確保有4個有效選項才進行洗牌
-                if (originalOptions.length !== 4) {
-                    console.warn(`題目 ${index + 1} 選項不完整，跳過洗牌`);
-                    return;
-                }
+                ];
                 
                 // 隨機排列選項
-                const shuffledOptions = shuffleArray([...originalOptions]);
+                const shuffledOptions = shuffleArray([...options]);
                 
                 const slide = document.createElement('div');
                 slide.className = 'slide';
