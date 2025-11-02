@@ -525,20 +525,30 @@
         
         // 選擇選項
         function selectOption(slideIndex, optionIndex, isCorrect) {
+            console.log('selectOption 被調用:', { slideIndex, optionIndex, isCorrect, showAnswers });
+            
             // 如果已經顯示答案，不允許再選擇
-            if (showAnswers) return;
+            if (showAnswers) {
+                console.log('已顯示答案，無法選擇');
+                return;
+            }
             
             // 移除當前題目所有選項的selected狀態
             const currentSlideOptions = document.querySelectorAll(`.option[data-slide="${slideIndex}"]`);
+            console.log('找到選項數量:', currentSlideOptions.length);
             currentSlideOptions.forEach(opt => opt.classList.remove('selected'));
             
             // 標記選中的選項
             const selectedOption = document.querySelector(`.option[data-slide="${slideIndex}"][data-option="${optionIndex}"]`);
-            selectedOption.classList.add('selected');
+            console.log('選中的選項:', selectedOption);
+            if (selectedOption) {
+                selectedOption.classList.add('selected');
+            }
             
             // 儲存用戶答案
             userAnswers[slideIndex] = { optionIndex, isCorrect };
             currentQuestionAnswered = true;
+            console.log('答案已儲存:', userAnswers[slideIndex]);
         }
         
         // 顯示反饋
