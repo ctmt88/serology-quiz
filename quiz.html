@@ -117,6 +117,12 @@
             font-weight: normal;
         }
         
+        .option.correct.answer-hidden {
+            background: white;
+            border-color: transparent;
+            font-weight: normal;
+        }
+        
         .explanation-toggle {
             background: #17a2b8;
             color: white;
@@ -367,7 +373,7 @@
                     ${q.image_base64 ? `<img src="${q.image_base64}" class="question-image" alt="題目圖片">` : ''}
                     <div class="options">
                         ${shuffledOptions.map((opt, idx) => `
-                            <div class="option ${opt.isCorrect ? 'correct hidden' : ''}">
+                            <div class="option ${opt.isCorrect ? 'correct answer-hidden' : ''}">
                                 (${String.fromCharCode(65 + idx)}) ${opt.content}
                             </div>
                         `).join('')}
@@ -399,17 +405,18 @@
         }
         
         // 切換答案顯示
+        // 切換答案顯示
         function toggleAnswers() {
             showAnswers = !showAnswers;
             const btn = document.getElementById('answer-toggle');
             const correctOptions = document.querySelectorAll('.option.correct');
             
             if (showAnswers) {
-                correctOptions.forEach(opt => opt.classList.remove('hidden'));
+                correctOptions.forEach(opt => opt.classList.remove('answer-hidden'));
                 btn.textContent = '隱藏答案';
                 btn.classList.add('show-answers');
             } else {
-                correctOptions.forEach(opt => opt.classList.add('hidden'));
+                correctOptions.forEach(opt => opt.classList.add('answer-hidden'));
                 btn.textContent = '顯示答案';
                 btn.classList.remove('show-answers');
             }
