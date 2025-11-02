@@ -93,10 +93,11 @@
             padding: 20px;
             border-radius: 15px;
             font-size: 1.2rem;
-            cursor: pointer;
+            cursor: pointer !important;
             transition: all 0.3s;
             border: 3px solid transparent;
             box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            pointer-events: auto !important;
         }
         
         .option:hover {
@@ -121,6 +122,13 @@
             background: white;
             border-color: transparent;
             font-weight: normal;
+            cursor: pointer;
+        }
+        
+        .option.correct.answer-hidden:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+            border-color: #667eea;
         }
         
         .option.selected {
