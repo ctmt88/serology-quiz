@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>血清免疫題庫 - 自訂練習</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Microsoft JhengHei', '微軟正黑體', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        
+        .container {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            max-width: 600px;
+            width: 100%;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+        
+        h1 {
+            color: #667eea;
+            text-align: center;
+            margin-bottom: 10px;
+            font-size: 2rem;
+        }
+        
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 0.9rem;
+        }
+        
+        .option-group {
+            margin-bottom: 25px;
+        }
+        
+        .option-group label {
+            display: block;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 1.1rem;
+        }
+        
+        .option-group input[type="number"] {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            font-size: 1rem;
+            transition: border-color 0.3s;
+        }
+        
+        .option-group input[type="number"]:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        .quick-select {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-top: 10px;
+        }
+        
+        .quick-btn {
+            flex: 1;
+            min-width: 60px;
+            padding: 10px;
+            background: #f0f0f0;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 0.95rem;
+            font-weight: 500;
+        }
+        
+        .quick-btn:hover {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+        
+        .category-select {
+            margin-bottom: 25px;
+        }
+        
+        .category-select label {
+            display: block;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 10px;
+        }
+        
+        .category-options {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 10px;
+        }
+        
+        .category-checkbox {
+            display: flex;
+            align-items: center;
+            padding: 8px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        
+        .category-checkbox:hover {
+            background: #e9ecef;
+        }
+        
+        .category-checkbox input[type="checkbox"] {
+            margin-right: 8px;
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+        }
+        
+        .start-btn {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 1.3rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-top: 20px;
+        }
+        
+        .start-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4);
+        }
+        
+        .start-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .info-box {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 20px;
+            border-left: 4px solid #667eea;
+        }
+        
+        .info-box h3 {
+            color: #667eea;
+            margin-bottom: 10px;
+            font-size: 1.1rem;
+        }
+        
+        .info-box p {
+            color: #666;
+            line-height: 1.6;
+            margin-bottom: 8px;
+        }
+        
+        .loading {
+            text-align: center;
+            color: #667eea;
+            padding: 20px;
+        }
+        
+        .error {
+            background: #fee;
+            color: #c00;
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 20px;
+            border-left: 4px solid #c00;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 血清免疫題庫</h1>
+        <div class="subtitle">自訂練習設定</div>
+        
+        <div id="loading" class="loading">
+            <p>⏳ 載入題庫資料中...</p>
+        </div>
+        
+        <div id="error" class="error" style="display: none;"></div>
+        
+        <div id="settings" style="display: none;">
+            <div class="option-group">
+                <label for="question-count">選擇題數：</label>
+                <input type="number" id="question-count" min="1" max="160" value="20">
+                <div class="quick-select">
+                    <button class="quick-btn" onclick="setCount(10)">10題</button>
+                    <button class="quick-btn" onclick="setCount(20)">20題</button>
+                    <button class="quick-btn" onclick="setCount(30)">30題</button>
+                    <button class="quick-btn" onclick="setCount(50)">50題</button>
+                    <button class="quick-btn" onclick="setCount(160)">全部</button>
+                </div>
+            </div>
+            
+            <div class="category-select">
+                <label>
+                    <input type="checkbox" id="select-all-categories" checked onchange="toggleAllCategories()">
+                    選擇類別（全選）
+                </label>
+                <div class="category-options" id="category-options">
+                    <!-- 動態載入類別 -->
+                </div>
+            </div>
+            
+            <button class="start-btn" onclick="startQuiz()">開始練習 🚀</button>
+            
+            <div class="info-box">
+                <h3>💡 使用說明</h3>
+                <p>📊 題庫總數：<span id="total-count">160</span> 題</p>
+                <p>🎲 題目順序：隨機排列</p>
+                <p>🎯 選項順序：隨機排列</p>
+                <p>📚 包含詳解：完整說明</p>
+            </div>
+        </div>
+    </div>
+    
+    <!-- SQL.js CDN -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.8.0/sql-wasm.js"></script>
+    
+    <script>
+        let db = null;
+        let allCategories = [];
+        
+        // 載入資料庫
+        async function loadDatabase() {
+            try {
+                const SQL = await initSqlJs({
+                    locateFile: file => `https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.8.0/${file}`
+                });
+                
+                const response = await fetch('data/questions.db');
+                const buffer = await response.arrayBuffer();
+                db = new SQL.Database(new Uint8Array(buffer));
+                
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('settings').style.display = 'block';
+                
+                loadCategories();
+                updateTotalCount();
+            } catch (error) {
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('error').style.display = 'block';
+                document.getElementById('error').textContent = '載入失敗：' + error.message;
+            }
+        }
+        
+        // 載入類別
+        function loadCategories() {
+            const result = db.exec('SELECT DISTINCT category FROM questions WHERE category IS NOT NULL ORDER BY category');
+            
+            if (result.length > 0) {
+                allCategories = result[0].values.map(row => row[0]);
+                
+                const container = document.getElementById('category-options');
+                container.innerHTML = allCategories.map(cat => `
+                    <label class="category-checkbox">
+                        <input type="checkbox" class="category-check" value="${cat}" checked>
+                        <span>${cat}</span>
+                    </label>
+                `).join('');
+            }
+        }
+        
+        // 更新題數
+        function updateTotalCount() {
+            const result = db.exec('SELECT COUNT(*) FROM questions');
+            if (result.length > 0) {
+                const count = result[0].values[0][0];
+                document.getElementById('total-count').textContent = count;
+                document.getElementById('question-count').max = count;
+            }
+        }
+        
+        // 設定題數
+        function setCount(count) {
+            document.getElementById('question-count').value = count;
+        }
+        
+        // 全選/取消全選類別
+        function toggleAllCategories() {
+            const checked = document.getElementById('select-all-categories').checked;
+            document.querySelectorAll('.category-check').forEach(cb => {
+                cb.checked = checked;
+            });
+        }
+        
+        // 開始測驗
+        function startQuiz() {
+            const count = parseInt(document.getElementById('question-count').value);
+            const selectedCategories = Array.from(document.querySelectorAll('.category-check:checked'))
+                .map(cb => cb.value);
+            
+            if (selectedCategories.length === 0) {
+                alert('請至少選擇一個類別！');
+                return;
+            }
+            
+            // 儲存設定到 localStorage
+            localStorage.setItem('quizSettings', JSON.stringify({
+                count: count,
+                categories: selectedCategories
+            }));
+            
+            // 跳轉到答題頁面
+            window.location.href = 'quiz.html';
+        }
+        
+        // 頁面載入時執行
+        window.addEventListener('DOMContentLoaded', loadDatabase);
+    </script>
+</body>
+</html>

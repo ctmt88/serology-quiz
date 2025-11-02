@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>血清免疫題庫 - 答題</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Microsoft JhengHei', '微軟正黑體', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #333;
+        }
+        
+        .slide-container {
+            width: 100vw;
+            height: 100vh;
+            overflow: hidden;
+            position: relative;
+        }
+        
+        .slide {
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 40px;
+            box-sizing: border-box;
+            position: absolute;
+            top: 0;
+            left: 0;
+            background: white;
+        }
+        
+        .slide:nth-child(odd) {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+        }
+        
+        .slide:nth-child(even) {
+            background: linear-gradient(135deg, #e3ffe7 0%, #d9e7ff 100%);
+        }
+        
+        .question-number {
+            font-size: 2.5rem;
+            font-weight: bold;
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+        
+        .question-id {
+            font-size: 1rem;
+            color: #888;
+            margin-bottom: 20px;
+        }
+        
+        .question-text {
+            font-size: 1.8rem;
+            font-weight: 500;
+            text-align: center;
+            margin-bottom: 30px;
+            color: #333;
+            max-width: 900px;
+            line-height: 1.6;
+        }
+        
+        .question-image {
+            max-width: 350px;
+            max-height: 280px;
+            margin: 15px 0;
+            border: 2px solid #667eea;
+            border-radius: 8px;
+            box-shadow: 0 3px 15px rgba(0,0,0,0.2);
+        }
+        
+        .options {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+            max-width: 900px;
+            width: 100%;
+            margin-bottom: 30px;
+        }
+        
+        .option {
+            background: white;
+            padding: 20px;
+            border-radius: 15px;
+            font-size: 1.2rem;
+            cursor: pointer;
+            transition: all 0.3s;
+            border: 3px solid transparent;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        .option:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+            border-color: #667eea;
+        }
+        
+        .option.correct {
+            background: #d4edda;
+            border-color: #28a745;
+            font-weight: bold;
+        }
+        
+        .option.correct.hidden {
+            background: white;
+            border-color: transparent;
+            font-weight: normal;
+        }
+        
+        .explanation-toggle {
+            background: #17a2b8;
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 25px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-bottom: 20px;
+        }
+        
+        .explanation-toggle:hover {
+            background: #138496;
+            transform: scale(1.05);
+        }
+        
+        .explanation {
+            max-width: 900px;
+            background: white;
+            padding: 25px;
+            border-radius: 15px;
+            margin-top: 20px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease;
+        }
+        
+        .explanation.show {
+            max-height: 1000px;
+        }
+        
+        .explanation h4 {
+            color: #667eea;
+            margin-bottom: 15px;
+            font-size: 1.3rem;
+        }
+        
+        .explanation-content {
+            color: #555;
+            line-height: 1.8;
+            font-size: 1rem;
+        }
+        
+        .controls {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 15px;
+            z-index: 1000;
+        }
+        
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 25px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: bold;
+        }
+        
+        .btn:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+        }
+        
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        .answer-toggle {
+            position: fixed;
+            top: 30px;
+            right: 30px;
+            background: #28a745;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-weight: bold;
+            z-index: 1000;
+            transition: all 0.3s;
+        }
+        
+        .answer-toggle:hover {
+            background: #218838;
+            transform: translateY(-2px);
+        }
+        
+        .answer-toggle.show-answers {
+            background: #ffc107;
+            color: #333;
+        }
+        
+        .slide-counter {
+            position: fixed;
+            top: 30px;
+            left: 30px;
+            background: white;
+            padding: 10px 20px;
+            border-radius: 20px;
+            font-weight: bold;
+            font-size: 1.2rem;
+            color: #667eea;
+            z-index: 1000;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        .back-btn {
+            position: fixed;
+            top: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #ff6b6b;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-weight: bold;
+            z-index: 1000;
+            transition: all 0.3s;
+        }
+        
+        .back-btn:hover {
+            background: #ff5252;
+            transform: translate(-50%, -2px);
+        }
+        
+        .hidden {
+            display: none !important;
+        }
+    </style>
+</head>
+<body>
+    <button class="back-btn" onclick="backToSettings()">🔄 重新設定</button>
+    <button class="answer-toggle" id="answer-toggle" onclick="toggleAnswers()">顯示答案</button>
+    
+    <div class="slide-counter">
+        <span id="current-slide">1</span> / <span id="total-slides">0</span>
+    </div>
+    
+    <div class="slide-container" id="slide-container">
+        <!-- 動態載入題目 -->
+    </div>
+    
+    <div class="controls">
+        <button class="btn" id="prev-btn" onclick="previousSlide()">上一題</button>
+        <button class="btn" id="next-btn" onclick="nextSlide()">下一題</button>
+    </div>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.8.0/sql-wasm.js"></script>
+    
+    <script>
+        let db = null;
+        let currentSlide = 0;
+        let totalSlides = 0;
+        let showAnswers = false;
+        
+        // 載入資料庫並初始化
+        async function init() {
+            try {
+                const SQL = await initSqlJs({
+                    locateFile: file => `https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.8.0/${file}`
+                });
+                
+                const response = await fetch('data/questions.db');
+                const buffer = await response.arrayBuffer();
+                db = new SQL.Database(new Uint8Array(buffer));
+                
+                loadQuestions();
+            } catch (error) {
+                alert('載入失敗：' + error.message);
+                backToSettings();
+            }
+        }
+        
+        // 載入題目
+        function loadQuestions() {
+            const settings = JSON.parse(localStorage.getItem('quizSettings') || '{"count":20,"categories":[]}');
+            
+            if (settings.categories.length === 0) {
+                alert('請先選擇類別！');
+                backToSettings();
+                return;
+            }
+            
+            const placeholders = settings.categories.map(() => '?').join(',');
+            const query = `
+                SELECT * FROM questions 
+                WHERE category IN (${placeholders})
+                ORDER BY RANDOM()
+                LIMIT ?
+            `;
+            
+            const params = [...settings.categories, settings.count];
+            const result = db.exec(query, params);
+            
+            if (result.length === 0 || result[0].values.length === 0) {
+                alert('沒有找到題目！');
+                backToSettings();
+                return;
+            }
+            
+            const columns = result[0].columns;
+            const questions = result[0].values.map(row => {
+                const obj = {};
+                columns.forEach((col, idx) => {
+                    obj[col] = row[idx];
+                });
+                return obj;
+            });
+            
+            renderQuestions(questions);
+        }
+        
+        // 渲染題目
+        function renderQuestions(questions) {
+            const container = document.getElementById('slide-container');
+            container.innerHTML = '';
+            
+            questions.forEach((q, index) => {
+                // 隨機排列選項
+                const options = [
+                    { letter: 'A', text: q.option_a, correct: q.correct_answer === 'A' },
+                    { letter: 'B', text: q.option_b, correct: q.correct_answer === 'B' },
+                    { letter: 'C', text: q.option_c, correct: q.correct_answer === 'C' },
+                    { letter: 'D', text: q.option_d, correct: q.correct_answer === 'D' }
+                ];
+                
+                const shuffled = shuffleArray(options);
+                
+                const slide = document.createElement('div');
+                slide.className = 'slide';
+                slide.innerHTML = `
+                    <div class="question-number">第 ${index + 1} 題</div>
+                    <div class="question-id">${q.category}</div>
+                    <div class="question-text">${q.question_text}</div>
+                    ${q.image_base64 ? `<img src="${q.image_base64}" class="question-image" alt="題目圖片">` : ''}
+                    <div class="options">
+                        ${shuffled.map((opt, idx) => `
+                            <div class="option ${opt.correct ? 'correct hidden' : ''}">
+                                (${String.fromCharCode(65 + idx)}) ${opt.text}
+                            </div>
+                        `).join('')}
+                    </div>
+                    <button class="explanation-toggle" onclick="toggleExplanation(${index})">查看詳解</button>
+                    <div class="explanation" id="explanation-${index}">
+                        <h4>詳細解析</h4>
+                        <div class="explanation-content">${q.explanation || '暫無詳解'}</div>
+                    </div>
+                `;
+                
+                container.appendChild(slide);
+            });
+            
+            totalSlides = questions.length;
+            document.getElementById('total-slides').textContent = totalSlides;
+            
+            updateSlidePosition();
+        }
+        
+        // 隨機排列陣列
+        function shuffleArray(array) {
+            const newArray = [...array];
+            for (let i = newArray.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [newArray[i], newArray[j]] = [newArray[j], newArray[i]];
+            }
+            return newArray;
+        }
+        
+        // 切換答案顯示
+        function toggleAnswers() {
+            showAnswers = !showAnswers;
+            const btn = document.getElementById('answer-toggle');
+            const correctOptions = document.querySelectorAll('.option.correct');
+            
+            if (showAnswers) {
+                correctOptions.forEach(opt => opt.classList.remove('hidden'));
+                btn.textContent = '隱藏答案';
+                btn.classList.add('show-answers');
+            } else {
+                correctOptions.forEach(opt => opt.classList.add('hidden'));
+                btn.textContent = '顯示答案';
+                btn.classList.remove('show-answers');
+            }
+        }
+        
+        // 切換詳解
+        function toggleExplanation(index) {
+            const explanation = document.getElementById(`explanation-${index}`);
+            const button = explanation.previousElementSibling;
+            
+            if (explanation.classList.contains('show')) {
+                explanation.classList.remove('show');
+                button.textContent = '查看詳解';
+            } else {
+                explanation.classList.add('show');
+                button.textContent = '隱藏詳解';
+            }
+        }
+        
+        // 更新slide位置
+        function updateSlidePosition() {
+            const slides = document.querySelectorAll('.slide');
+            
+            slides.forEach((slide, index) => {
+                if (index === currentSlide) {
+                    slide.style.display = 'flex';
+                    slide.style.transform = 'translateX(0)';
+                } else {
+                    slide.style.display = 'none';
+                }
+            });
+            
+            document.getElementById('current-slide').textContent = currentSlide + 1;
+            
+            const prevBtn = document.getElementById('prev-btn');
+            const nextBtn = document.getElementById('next-btn');
+            
+            prevBtn.disabled = currentSlide === 0;
+            nextBtn.disabled = currentSlide === totalSlides - 1;
+        }
+        
+        // 上一題
+        function previousSlide() {
+            if (currentSlide > 0) {
+                currentSlide--;
+                updateSlidePosition();
+            }
+        }
+        
+        // 下一題
+        function nextSlide() {
+            if (currentSlide < totalSlides - 1) {
+                currentSlide++;
+                updateSlidePosition();
+            }
+        }
+        
+        // 回到設定頁面
+        function backToSettings() {
+            window.location.href = 'index.html';
+        }
+        
+        // 鍵盤快捷鍵
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'ArrowLeft') previousSlide();
+            else if (e.key === 'ArrowRight') nextSlide();
+        });
+        
+        // 初始化
+        window.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>
