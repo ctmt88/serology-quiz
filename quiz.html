@@ -492,7 +492,7 @@
                                  data-slide="${index}" 
                                  data-option="${idx}" 
                                  data-correct="${opt.isCorrect}"
-                                 onclick="selectOption(${index}, ${idx}, ${opt.isCorrect})">
+                                 onclick="selectOption(${index}, ${idx}, ${opt.isCorrect}, event)">
                                 (${String.fromCharCode(65 + idx)}) ${opt.content}
                             </div>
                         `).join('')}
@@ -524,7 +524,7 @@
         }
         
         // 選擇選項
-        function selectOption(slideIndex, optionIndex, isCorrect) {
+        function selectOption(slideIndex, optionIndex, isCorrect, event) {
             console.log('selectOption 被調用:', { slideIndex, optionIndex, isCorrect, showAnswers });
             
             // 如果已經顯示答案，不允許再選擇
@@ -538,11 +538,13 @@
             console.log('找到選項數量:', currentSlideOptions.length);
             currentSlideOptions.forEach(opt => opt.classList.remove('selected'));
             
-            // 標記選中的選項
-            const selectedOption = document.querySelector(`.option[data-slide="${slideIndex}"][data-option="${optionIndex}"]`);
-            console.log('選中的選項:', selectedOption);
+            // 使用 event.target 直接獲取被點擊的元素
+            const selectedOption = event.target.closest('.option');
+            console.log('選中的選項:', selectedOption, '元素類名:', selectedOption ? selectedOption.className : 'null');
+            
             if (selectedOption) {
                 selectedOption.classList.add('selected');
+                console.log('已添加 selected class，新類名:', selectedOption.className);
             }
             
             // 儲存用戶答案
