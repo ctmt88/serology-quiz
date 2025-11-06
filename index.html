@@ -193,12 +193,194 @@
             margin-top: 20px;
             border-left: 4px solid #c00;
         }
+        
+        .visitor-counter {
+            text-align: center;
+            padding: 15px;
+            margin-top: 20px;
+            background: linear-gradient(135deg, #667eea15 0%, #764ba215 100%);
+            border-radius: 10px;
+            font-size: 0.95rem;
+            color: #666;
+        }
+        
+        .visitor-counter img {
+            vertical-align: middle;
+            margin-left: 8px;
+            height: 20px;
+        }
+        
+        /* ========== 響應式設計 (RWD) ========== */
+        
+        /* 平板 (768px 以下) */
+        @media (max-width: 768px) {
+            .container {
+                padding: 30px 20px;
+                max-width: 100%;
+            }
+            
+            h1 {
+                font-size: 1.6rem;
+                margin-bottom: 8px;
+            }
+            
+            .subtitle {
+                font-size: 0.85rem;
+                margin-bottom: 25px;
+            }
+            
+            .option-group label {
+                font-size: 1rem;
+            }
+            
+            .option-group input[type="number"] {
+                padding: 10px;
+                font-size: 0.95rem;
+            }
+            
+            .quick-select {
+                gap: 8px;
+            }
+            
+            .quick-btn {
+                padding: 8px;
+                font-size: 0.9rem;
+                min-width: 50px;
+            }
+            
+            .category-options {
+                grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+                gap: 8px;
+            }
+            
+            .start-btn {
+                padding: 12px;
+                font-size: 1.1rem;
+            }
+            
+            .info-box {
+                padding: 12px;
+            }
+            
+            .info-box h3 {
+                font-size: 1rem;
+            }
+            
+            .info-box p {
+                font-size: 0.9rem;
+            }
+        }
+        
+        /* 手機 (480px 以下) */
+        @media (max-width: 480px) {
+            body {
+                padding: 10px;
+            }
+            
+            .container {
+                padding: 25px 15px;
+                border-radius: 15px;
+            }
+            
+            h1 {
+                font-size: 1.4rem;
+                margin-bottom: 6px;
+            }
+            
+            .subtitle {
+                font-size: 0.8rem;
+                margin-bottom: 20px;
+            }
+            
+            .option-group {
+                margin-bottom: 20px;
+            }
+            
+            .option-group label {
+                font-size: 0.95rem;
+                margin-bottom: 8px;
+            }
+            
+            .option-group input[type="number"] {
+                padding: 10px;
+                font-size: 0.9rem;
+            }
+            
+            .quick-select {
+                gap: 6px;
+            }
+            
+            .quick-btn {
+                padding: 8px 6px;
+                font-size: 0.85rem;
+                min-width: 45px;
+                flex: 1;
+            }
+            
+            .category-select label {
+                font-size: 0.95rem;
+            }
+            
+            .category-options {
+                grid-template-columns: 1fr 1fr;
+                gap: 6px;
+            }
+            
+            .category-checkbox {
+                padding: 6px;
+                font-size: 0.85rem;
+            }
+            
+            .category-checkbox input[type="checkbox"] {
+                width: 16px;
+                height: 16px;
+                margin-right: 6px;
+            }
+            
+            .start-btn {
+                padding: 12px;
+                font-size: 1rem;
+                margin-top: 15px;
+            }
+            
+            .info-box {
+                padding: 12px;
+                margin-top: 15px;
+            }
+            
+            .info-box h3 {
+                font-size: 0.95rem;
+                margin-bottom: 8px;
+            }
+            
+            .info-box p {
+                font-size: 0.85rem;
+                margin-bottom: 6px;
+                line-height: 1.5;
+            }
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <h1>🧪 血清免疫題庫</h1>
         <div class="subtitle">自訂練習設定</div>
+        
+        <!-- 統計面板 -->
+        <div class="stats-panel">
+            <div class="stat-item">
+                <div class="stat-number" id="visit-count">0</div>
+                <div class="stat-label">訪問次數</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-number" id="practice-count">0</div>
+                <div class="stat-label">練習次數</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-number" id="total-questions">0</div>
+                <div class="stat-label">累計題數</div>
+            </div>
+        </div>
         
         <div id="loading" class="loading">
             <p>⏳ 載入題庫資料中...</p>
@@ -237,6 +419,10 @@
                 <p>🎲 題目順序：隨機排列</p>
                 <p>🎯 選項順序：隨機排列</p>
                 <p>📚 包含詳解：完整說明</p>
+            </div>
+            
+            <div class="visitor-counter">
+                👁️ 網頁瀏覽次數：<span id="visit-counter-display" style="font-weight: bold; color: #667eea;">567</span> 次
             </div>
         </div>
     </div>
@@ -333,7 +519,58 @@
         }
         
         // 頁面載入時執行
-        window.addEventListener('DOMContentLoaded', loadDatabase);
+        window.addEventListener('DOMContentLoaded', function() {
+            loadDatabase();
+            updateVisitCounter();
+        });
+        
+        // 訪問計數器
+        function updateVisitCounter() {
+            const INITIAL_COUNT = 567; // 起始值
+            const STORAGE_KEY = 'pageVisitCount';
+            
+            // 從 localStorage 讀取或初始化計數
+            let visitCount = localStorage.getItem(STORAGE_KEY);
+            
+            if (!visitCount) {
+                visitCount = INITIAL_COUNT;
+            } else {
+                visitCount = parseInt(visitCount);
+            }
+            
+            // 增加計數
+            visitCount++;
+            
+            // 保存到 localStorage
+            localStorage.setItem(STORAGE_KEY, visitCount);
+            
+            // 顯示計數（添加數字動畫效果）
+            const counterDisplay = document.getElementById('visit-counter-display');
+            if (counterDisplay) {
+                animateCounter(counterDisplay, visitCount);
+            }
+        }
+        
+        // 數字動畫效果
+        function animateCounter(element, targetValue) {
+            const duration = 1000; // 1秒動畫
+            const startValue = Math.max(567, targetValue - 10);
+            const startTime = performance.now();
+            
+            function update(currentTime) {
+                const elapsed = currentTime - startTime;
+                const progress = Math.min(elapsed / duration, 1);
+                
+                const currentValue = Math.floor(startValue + (targetValue - startValue) * progress);
+                element.textContent = currentValue.toLocaleString();
+                
+                if (progress < 1) {
+                    requestAnimationFrame(update);
+                }
+            }
+            
+            requestAnimationFrame(update);
+        }
     </script>
 </body>
 </html>
