@@ -541,6 +541,48 @@
             font-weight: bold;
         }
         
+        .correct-questions {
+            margin-top: 30px;
+        }
+        
+        .correct-questions h3 {
+            color: #28a745;
+            margin-bottom: 20px;
+            font-size: 1.5rem;
+        }
+        
+        .correct-question-item {
+            background: #f0f9f4;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 15px;
+            border-left: 4px solid #28a745;
+        }
+        
+        .correct-question-item .question-title {
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 10px;
+        }
+        
+        .correct-question-item .answer-info {
+            font-size: 0.9rem;
+            color: #666;
+        }
+        
+        .explanation-box {
+            margin-top: 10px;
+            padding: 12px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            line-height: 1.6;
+        }
+        
+        .explanation-box strong {
+            color: #667eea;
+        }
+        
         .results-actions {
             display: flex;
             gap: 15px;
@@ -991,6 +1033,11 @@
                 <div id="wrong-questions-list"></div>
             </div>
             
+            <div class="correct-questions" id="correct-questions-section" style="display: none;">
+                <h3>✅ 答對題目</h3>
+                <div id="correct-questions-list"></div>
+            </div>
+            
             <div class="results-actions">
                 <button class="results-btn review" onclick="reviewAnswers()">📖 檢視答案</button>
                 <button class="results-btn home" onclick="backToSettings()">🏠 回首頁</button>
@@ -1204,12 +1251,20 @@
             let correctCount = 0;
             let wrongCount = 0;
             const wrongQuestions = [];
+            const correctQuestions = [];
             
             // 計算答對和答錯的題數
             for (let i = 0; i < totalSlides; i++) {
                 if (userAnswers[i]) {
                     if (userAnswers[i].isCorrect) {
                         correctCount++;
+                        correctQuestions.push({
+                            index: i,
+                            questionText: questionsData[i].questionText,
+                            category: questionsData[i].category,
+                            yourAnswer: userAnswers[i].selectedLetter,
+                            explanation: questionsData[i].explanation
+                        });
                     } else {
                         wrongCount++;
                         wrongQuestions.push({
@@ -1236,11 +1291,11 @@
             
             const score = Math.round((correctCount / totalSlides) * 100);
             
-            showResults(score, correctCount, wrongCount, wrongQuestions);
+            showResults(score, correctCount, wrongCount, wrongQuestions, correctQuestions);
         }
         
         // 顯示成績
-        function showResults(score, correctCount, wrongCount, wrongQuestions) {
+        function showResults(score, correctCount, wrongCount, wrongQuestions, correctQuestions) {
             const overlay = document.getElementById('results-overlay');
             const scoreDisplay = document.getElementById('score-display');
             const totalQuestionsEl = document.getElementById('total-questions');
@@ -1248,6 +1303,8 @@
             const wrongCountEl = document.getElementById('wrong-count');
             const wrongQuestionsSection = document.getElementById('wrong-questions-section');
             const wrongQuestionsList = document.getElementById('wrong-questions-list');
+            const correctQuestionsSection = document.getElementById('correct-questions-section');
+            const correctQuestionsList = document.getElementById('correct-questions-list');
             
             // 設定分數樣式
             scoreDisplay.textContent = `${score} 分`;
@@ -1276,11 +1333,28 @@
                             你的答案：<span class="your-answer">${wq.yourAnswer}</span> | 
                             正確答案：<span class="correct-answer">${wq.correctAnswer}</span>
                         </div>
-                        ${wq.explanation ? `<div style="margin-top: 10px; padding: 10px; background: #f8f9fa; border-radius: 8px; font-size: 0.9rem;"><strong>解析：</strong>${wq.explanation}</div>` : ''}
+                        ${wq.explanation ? `<div class="explanation-box"><strong>💡 詳細解析：</strong><br>${wq.explanation}</div>` : ''}
                     </div>
                 `).join('');
             } else {
                 wrongQuestionsSection.style.display = 'none';
+            }
+            
+            // 顯示答對題目列表
+            if (correctQuestions.length > 0) {
+                correctQuestionsSection.style.display = 'block';
+                correctQuestionsList.innerHTML = correctQuestions.map((cq, idx) => `
+                    <div class="correct-question-item">
+                        <div class="question-title">第 ${cq.index + 1} 題 - ${cq.category}</div>
+                        <div style="margin: 10px 0; color: #333;">${cq.questionText}</div>
+                        <div class="answer-info">
+                            你的答案：<span style="color: #28a745; font-weight: bold;">${cq.yourAnswer} ✓</span>
+                        </div>
+                        ${cq.explanation ? `<div class="explanation-box"><strong>💡 詳細解析：</strong><br>${cq.explanation}</div>` : ''}
+                    </div>
+                `).join('');
+            } else {
+                correctQuestionsSection.style.display = 'none';
             }
             
             overlay.classList.add('show');
