@@ -189,6 +189,12 @@
             font-weight: bold !important;
         }
         
+        .option.show-correct-answer {
+            background: #d4edda !important;
+            border-color: #28a745 !important;
+            font-weight: bold !important;
+        }
+        
         .option.correct-answer {
             background: #d4edda;
             border-color: #28a745;
@@ -1180,6 +1186,11 @@
                             </div>
                         `).join('')}
                     </div>
+                    <button class="explanation-toggle" id="explanation-toggle-${index}" onclick="toggleExplanation(${index})" style="display: none;">查看詳解</button>
+                    <div class="explanation" id="explanation-${index}">
+                        <h4>詳細解析</h4>
+                        <div class="explanation-content">${q.explanation || '暫無詳解'}</div>
+                    </div>
                 `;
                 
                 container.appendChild(slide);
@@ -1253,10 +1264,20 @@
                 document.getElementById('timer-display').style.display = 'inline';
                 updateTimerDisplay();
                 startTimer();
+                
+                // 隱藏所有詳解按鈕
+                document.querySelectorAll('.explanation-toggle').forEach(btn => {
+                    btn.style.display = 'none';
+                });
             } else {
                 // 練習模式：恢復原始功能
                 document.getElementById('submit-btn').style.display = 'none';
                 document.getElementById('answer-progress').style.display = 'none';
+                
+                // 顯示所有詳解按鈕
+                document.querySelectorAll('.explanation-toggle').forEach(btn => {
+                    btn.style.display = 'inline-block';
+                });
                 
                 // 顯示立即顯示答案按鈕（為練習模式添加）
                 const answerToggle = document.createElement('button');
@@ -1318,9 +1339,7 @@
                 // 顯示當前題的答案
                 options.forEach(opt => {
                     if (opt.dataset.correct === 'true') {
-                        opt.style.background = '#d4edda';
-                        opt.style.borderColor = '#28a745';
-                        opt.style.fontWeight = 'bold';
+                        opt.classList.add('show-correct-answer');
                     }
                 });
                 btn.textContent = '隱藏答案';
@@ -1328,14 +1347,24 @@
             } else {
                 // 隱藏答案
                 options.forEach(opt => {
-                    if (opt.dataset.correct === 'true' && !opt.classList.contains('selected')) {
-                        opt.style.background = 'white';
-                        opt.style.borderColor = 'transparent';
-                        opt.style.fontWeight = 'normal';
-                    }
+                    opt.classList.remove('show-correct-answer');
                 });
                 btn.textContent = '顯示答案';
                 btn.style.background = '#28a745';
+            }
+        }
+        
+        // 切換詳解
+        function toggleExplanation(index) {
+            const explanation = document.getElementById(`explanation-${index}`);
+            const button = document.getElementById(`explanation-toggle-${index}`);
+            
+            if (explanation.classList.contains('show')) {
+                explanation.classList.remove('show');
+                button.textContent = '查看詳解';
+            } else {
+                explanation.classList.add('show');
+                button.textContent = '隱藏詳解';
             }
         }
         
@@ -1553,6 +1582,19 @@
                 if (selectedOption && !showAnswers) {
                     selectedOption.classList.add('selected');
                 }
+            }
+            
+            // 練習模式：重置答案顯示狀態
+            if (quizMode === 'practice') {
+                const btn = document.getElementById('answer-toggle');
+                if (btn) {
+                    btn.textContent = '顯示答案';
+                    btn.style.background = '#28a745';
+                }
+                // 移除當前頁所有答案顯示
+                document.querySelectorAll('.option').forEach(opt => {
+                    opt.classList.remove('show-correct-answer');
+                });
             }
         }
         
