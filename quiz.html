@@ -585,6 +585,93 @@
             color: #666;
         }
         
+        .all-questions-section {
+            margin-top: 30px;
+        }
+        
+        .all-questions-section h3 {
+            color: #667eea;
+            margin-bottom: 10px;
+            font-size: 1.5rem;
+        }
+        
+        .question-review-item {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+        
+        .question-review-item.correct {
+            border-left: 5px solid #28a745;
+        }
+        
+        .question-review-item.wrong {
+            border-left: 5px solid #dc3545;
+        }
+        
+        .question-review-item.unanswered {
+            border-left: 5px solid #6c757d;
+        }
+        
+        .question-review-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+        
+        .question-review-title {
+            font-weight: bold;
+            color: #333;
+            font-size: 1.1rem;
+        }
+        
+        .question-review-status {
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: bold;
+        }
+        
+        .question-review-status.correct {
+            background: #d4edda;
+            color: #28a745;
+        }
+        
+        .question-review-status.wrong {
+            background: #f8d7da;
+            color: #dc3545;
+        }
+        
+        .question-review-status.unanswered {
+            background: #e9ecef;
+            color: #6c757d;
+        }
+        
+        .question-review-content {
+            margin: 15px 0;
+            font-size: 1rem;
+            line-height: 1.6;
+            color: #333;
+        }
+        
+        .question-review-answer {
+            background: #f8f9fa;
+            padding: 12px;
+            border-radius: 8px;
+            margin: 10px 0;
+            font-size: 0.95rem;
+        }
+        
+        .answer-label {
+            font-weight: bold;
+            margin-right: 8px;
+        }
+        
         .explanation-box {
             margin-top: 10px;
             padding: 12px;
@@ -985,6 +1072,28 @@
             .results-btn {
                 width: 100%;
             }
+            
+            .question-review-item {
+                padding: 15px;
+            }
+            
+            .question-review-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 10px;
+            }
+            
+            .question-review-title {
+                font-size: 1rem;
+            }
+            
+            .question-review-content {
+                font-size: 0.95rem;
+            }
+            
+            .question-review-answer {
+                font-size: 0.85rem;
+            }
         }
     </style>
 </head>
@@ -1046,14 +1155,10 @@
                 </div>
             </div>
             
-            <div class="wrong-questions" id="wrong-questions-section" style="display: none;">
-                <h3>❌ 答錯題目</h3>
-                <div id="wrong-questions-list"></div>
-            </div>
-            
-            <div class="correct-questions" id="correct-questions-section" style="display: none;">
-                <h3>✅ 答對題目</h3>
-                <div id="correct-questions-list"></div>
+            <div class="all-questions-section" id="all-questions-section">
+                <h3>📝 完整題目詳解</h3>
+                <p style="color: #666; font-size: 0.9rem; margin-bottom: 15px;">以下為本次考試所有題目的詳細解析</p>
+                <div id="all-questions-list"></div>
             </div>
             
             <div class="results-actions">
@@ -1402,61 +1507,56 @@
         function calculateResults() {
             let correctCount = 0;
             let wrongCount = 0;
-            const wrongQuestions = [];
-            const correctQuestions = [];
+            const allQuestionsReview = [];
             
-            // 計算答對和答錯的題數
+            // 遍歷所有題目
             for (let i = 0; i < totalSlides; i++) {
+                const questionData = questionsData[i];
+                let status = 'unanswered';
+                let yourAnswer = '未作答';
+                
                 if (userAnswers[i]) {
+                    yourAnswer = userAnswers[i].selectedLetter;
                     if (userAnswers[i].isCorrect) {
                         correctCount++;
-                        correctQuestions.push({
-                            index: i,
-                            questionText: questionsData[i].questionText,
-                            category: questionsData[i].category,
-                            yourAnswer: userAnswers[i].selectedLetter,
-                            explanation: questionsData[i].explanation
-                        });
+                        status = 'correct';
                     } else {
                         wrongCount++;
-                        wrongQuestions.push({
-                            index: i,
-                            questionText: questionsData[i].questionText,
-                            category: questionsData[i].category,
-                            yourAnswer: userAnswers[i].selectedLetter,
-                            correctAnswer: userAnswers[i].correctLetter,
-                            explanation: questionsData[i].explanation
-                        });
+                        status = 'wrong';
                     }
                 } else {
                     wrongCount++; // 未作答算錯
-                    wrongQuestions.push({
-                        index: i,
-                        questionText: questionsData[i].questionText,
-                        category: questionsData[i].category,
-                        yourAnswer: '未作答',
-                        correctAnswer: questionsData[i].originalAnswer,
-                        explanation: questionsData[i].explanation
-                    });
                 }
+                
+                // 找出正確答案字母
+                const correctOption = questionData.shuffledOptions.find(opt => opt.isCorrect);
+                const correctAnswer = correctOption ? correctOption.letter : questionData.originalAnswer;
+                
+                allQuestionsReview.push({
+                    index: i,
+                    status: status,
+                    questionText: questionData.questionText,
+                    category: questionData.category,
+                    yourAnswer: yourAnswer,
+                    correctAnswer: correctAnswer,
+                    explanation: questionData.explanation
+                });
             }
             
             const score = Math.round((correctCount / totalSlides) * 100);
             
-            showResults(score, correctCount, wrongCount, wrongQuestions, correctQuestions);
+            showResults(score, correctCount, wrongCount, allQuestionsReview);
         }
         
         // 顯示成績
-        function showResults(score, correctCount, wrongCount, wrongQuestions, correctQuestions) {
+        function showResults(score, correctCount, wrongCount, allQuestionsReview) {
             const overlay = document.getElementById('results-overlay');
             const scoreDisplay = document.getElementById('score-display');
             const totalQuestionsEl = document.getElementById('total-questions');
             const correctCountEl = document.getElementById('correct-count');
             const wrongCountEl = document.getElementById('wrong-count');
-            const wrongQuestionsSection = document.getElementById('wrong-questions-section');
-            const wrongQuestionsList = document.getElementById('wrong-questions-list');
-            const correctQuestionsSection = document.getElementById('correct-questions-section');
-            const correctQuestionsList = document.getElementById('correct-questions-list');
+            const allQuestionsSection = document.getElementById('all-questions-section');
+            const allQuestionsList = document.getElementById('all-questions-list');
             
             // 設定分數樣式
             scoreDisplay.textContent = `${score} 分`;
@@ -1474,40 +1574,42 @@
             correctCountEl.textContent = correctCount;
             wrongCountEl.textContent = wrongCount;
             
-            // 顯示錯題列表
-            if (wrongQuestions.length > 0) {
-                wrongQuestionsSection.style.display = 'block';
-                wrongQuestionsList.innerHTML = wrongQuestions.map((wq, idx) => `
-                    <div class="wrong-question-item">
-                        <div class="question-title">第 ${wq.index + 1} 題 - ${wq.category}</div>
-                        <div style="margin: 10px 0; color: #333;">${wq.questionText}</div>
-                        <div class="answer-info">
-                            你的答案：<span class="your-answer">${wq.yourAnswer}</span> | 
-                            正確答案：<span class="correct-answer">${wq.correctAnswer}</span>
+            // 顯示所有題目的詳解（按題號順序）
+            allQuestionsList.innerHTML = allQuestionsReview.map((q, idx) => {
+                const statusText = q.status === 'correct' ? '✓ 答對' : (q.status === 'wrong' ? '✗ 答錯' : '− 未答');
+                const statusClass = q.status;
+                
+                return `
+                    <div class="question-review-item ${statusClass}">
+                        <div class="question-review-header">
+                            <div class="question-review-title">第 ${q.index + 1} 題 - ${q.category}</div>
+                            <div class="question-review-status ${statusClass}">${statusText}</div>
                         </div>
-                        ${wq.explanation ? `<div class="explanation-box"><strong>💡 詳細解析：</strong><br>${wq.explanation}</div>` : ''}
-                    </div>
-                `).join('');
-            } else {
-                wrongQuestionsSection.style.display = 'none';
-            }
-            
-            // 顯示答對題目列表
-            if (correctQuestions.length > 0) {
-                correctQuestionsSection.style.display = 'block';
-                correctQuestionsList.innerHTML = correctQuestions.map((cq, idx) => `
-                    <div class="correct-question-item">
-                        <div class="question-title">第 ${cq.index + 1} 題 - ${cq.category}</div>
-                        <div style="margin: 10px 0; color: #333;">${cq.questionText}</div>
-                        <div class="answer-info">
-                            你的答案：<span style="color: #28a745; font-weight: bold;">${cq.yourAnswer} ✓</span>
+                        
+                        <div class="question-review-content">${q.questionText}</div>
+                        
+                        <div class="question-review-answer">
+                            <div><span class="answer-label">你的答案：</span>
+                                <span style="color: ${q.status === 'correct' ? '#28a745' : '#dc3545'}; font-weight: bold;">
+                                    ${q.yourAnswer}
+                                </span>
+                            </div>
+                            ${q.status !== 'correct' ? `
+                            <div style="margin-top: 5px;">
+                                <span class="answer-label">正確答案：</span>
+                                <span style="color: #28a745; font-weight: bold;">${q.correctAnswer}</span>
+                            </div>
+                            ` : ''}
                         </div>
-                        ${cq.explanation ? `<div class="explanation-box"><strong>💡 詳細解析：</strong><br>${cq.explanation}</div>` : ''}
+                        
+                        ${q.explanation ? `
+                        <div class="explanation-box">
+                            <strong>💡 詳細解析：</strong><br>${q.explanation}
+                        </div>
+                        ` : ''}
                     </div>
-                `).join('');
-            } else {
-                correctQuestionsSection.style.display = 'none';
-            }
+                `;
+            }).join('');
             
             overlay.classList.add('show');
         }
