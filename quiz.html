@@ -1530,9 +1530,10 @@
                     wrongCount++; // 未作答算錯
                 }
                 
-                // 找出正確答案字母
-                const correctOption = questionData.shuffledOptions.find(opt => opt.isCorrect);
-                const correctAnswer = correctOption ? correctOption.letter : questionData.originalAnswer;
+                // 找出正確答案在shuffledOptions中的位置（索引）
+                const correctOptionIndex = questionData.shuffledOptions.findIndex(opt => opt.isCorrect);
+                // 轉換成顯示的字母 A, B, C, D
+                const correctAnswer = correctOptionIndex >= 0 ? String.fromCharCode(65 + correctOptionIndex) : '?';
                 
                 allQuestionsReview.push({
                     index: i,
