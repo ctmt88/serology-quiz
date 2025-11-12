@@ -194,6 +194,61 @@
             border-left: 4px solid #c00;
         }
         
+        .mode-select {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-top: 10px;
+        }
+        
+        .mode-option {
+            cursor: pointer;
+        }
+        
+        .mode-option input[type="radio"] {
+            display: none;
+        }
+        
+        .mode-card {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 12px;
+            border: 3px solid #ddd;
+            text-align: center;
+            transition: all 0.3s;
+        }
+        
+        .mode-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
+        }
+        
+        .mode-option input[type="radio"]:checked + .mode-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-color: #667eea;
+            color: white;
+        }
+        
+        .mode-icon {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+        
+        .mode-title {
+            font-size: 1.2rem;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        
+        .mode-desc {
+            font-size: 0.85rem;
+            opacity: 0.9;
+        }
+        
+        .mode-option input[type="radio"]:checked + .mode-card .mode-desc {
+            opacity: 1;
+        }
+        
         .visitor-counter {
             text-align: center;
             padding: 15px;
@@ -337,6 +392,27 @@
                 margin-right: 6px;
             }
             
+            .mode-select {
+                grid-template-columns: 1fr;
+                gap: 10px;
+            }
+            
+            .mode-card {
+                padding: 15px;
+            }
+            
+            .mode-icon {
+                font-size: 2rem;
+            }
+            
+            .mode-title {
+                font-size: 1rem;
+            }
+            
+            .mode-desc {
+                font-size: 0.8rem;
+            }
+            
             .start-btn {
                 padding: 12px;
                 font-size: 1rem;
@@ -389,6 +465,28 @@
         <div id="error" class="error" style="display: none;"></div>
         
         <div id="settings" style="display: none;">
+            <div class="option-group">
+                <label>選擇模式：</label>
+                <div class="mode-select">
+                    <div class="mode-option" onclick="selectMode('practice')">
+                        <input type="radio" name="mode" id="mode-practice" value="practice" checked>
+                        <div class="mode-card">
+                            <div class="mode-icon">📚</div>
+                            <div class="mode-title">練習模式</div>
+                            <div class="mode-desc">逐題作答，立即查看解析</div>
+                        </div>
+                    </div>
+                    <div class="mode-option" onclick="selectMode('exam')">
+                        <input type="radio" name="mode" id="mode-exam" value="exam">
+                        <div class="mode-card">
+                            <div class="mode-icon">⏱️</div>
+                            <div class="mode-title">考試模式</div>
+                            <div class="mode-desc">限時作答（每題45秒）</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
             <div class="option-group">
                 <label for="question-count">選擇題數：</label>
                 <input type="number" id="question-count" min="1" max="160" value="20">
@@ -489,6 +587,11 @@
             document.getElementById('question-count').value = count;
         }
         
+        // 選擇模式
+        function selectMode(mode) {
+            document.getElementById(`mode-${mode}`).checked = true;
+        }
+        
         // 全選/取消全選類別
         function toggleAllCategories() {
             const checked = document.getElementById('select-all-categories').checked;
@@ -500,6 +603,7 @@
         // 開始測驗
         function startQuiz() {
             const count = parseInt(document.getElementById('question-count').value);
+            const mode = document.querySelector('input[name="mode"]:checked').value;
             const selectedCategories = Array.from(document.querySelectorAll('.category-check:checked'))
                 .map(cb => cb.value);
             
@@ -511,7 +615,8 @@
             // 儲存設定到 localStorage
             localStorage.setItem('quizSettings', JSON.stringify({
                 count: count,
-                categories: selectedCategories
+                categories: selectedCategories,
+                mode: mode  // 新增：儲存模式
             }));
             
             // 跳轉到答題頁面

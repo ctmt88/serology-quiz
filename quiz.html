@@ -415,6 +415,15 @@
             color: #667eea;
         }
         
+        #timer-display.warning {
+            animation: pulse 1s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        
         .results-overlay {
             position: fixed;
             top: 0;
@@ -988,6 +997,9 @@
     <button class="back-btn" onclick="backToSettings()">🔄 重新設定</button>
     
     <div class="answer-progress" id="answer-progress">
+        <span id="timer-display" style="display: none; color: #dc3545; font-weight: bold; margin-right: 15px;">
+            ⏱️ <span id="timer-text">00:00</span>
+        </span>
         已作答：<span id="answered-count">0</span> / <span id="total-count">0</span> 題
     </div>
     
@@ -1057,6 +1069,10 @@
         let currentCorrectIndex = -1;
         let questionsData = []; // 儲存所有題目資料
         let examSubmitted = false; // 是否已交卷
+        let quizMode = 'practice'; // 模式：practice 或 exam
+        let totalTime = 0; // 總時間（秒）
+        let remainingTime = 0; // 剩餘時間（秒）
+        let timerInterval = null; // 計時器
         
         // 載入資料庫並初始化
         async function init() {
@@ -1078,7 +1094,10 @@
         
         // 載入題目
         function loadQuestions() {
-            const settings = JSON.parse(localStorage.getItem('quizSettings') || '{"count":20,"categories":[]}');
+            const settings = JSON.parse(localStorage.getItem('quizSettings') || '{"count":20,"categories":[],"mode":"practice"}');
+            
+            // 設定模式
+            quizMode = settings.mode || 'practice';
             
             if (settings.categories.length === 0) {
                 alert('請先選擇類別！');
@@ -1172,6 +1191,7 @@
             
             updateSlidePosition();
             updateAnswerProgress();
+            initializeMode(); // 初始化模式
         }
         
         // 隨機排列陣列
@@ -1222,8 +1242,111 @@
             document.getElementById('answered-count').textContent = answeredCount;
         }
         
+        // 初始化模式
+        function initializeMode() {
+            if (quizMode === 'exam') {
+                // 考試模式
+                totalTime = totalSlides * 45; // 每題45秒
+                remainingTime = totalTime;
+                
+                // 顯示計時器
+                document.getElementById('timer-display').style.display = 'inline';
+                updateTimerDisplay();
+                startTimer();
+            } else {
+                // 練習模式：恢復原始功能
+                document.getElementById('submit-btn').style.display = 'none';
+                document.getElementById('answer-progress').style.display = 'none';
+                
+                // 顯示立即顯示答案按鈕（為練習模式添加）
+                const answerToggle = document.createElement('button');
+                answerToggle.className = 'answer-toggle';
+                answerToggle.id = 'answer-toggle';
+                answerToggle.textContent = '顯示答案';
+                answerToggle.onclick = toggleAnswersPractice;
+                document.body.appendChild(answerToggle);
+            }
+        }
+        
+        // 開始計時器
+        function startTimer() {
+            if (timerInterval) clearInterval(timerInterval);
+            
+            timerInterval = setInterval(() => {
+                remainingTime--;
+                updateTimerDisplay();
+                
+                // 時間少於1分鐘時閃爍警告
+                if (remainingTime <= 60 && remainingTime > 0) {
+                    document.getElementById('timer-display').classList.add('warning');
+                }
+                
+                // 時間到自動交卷
+                if (remainingTime <= 0) {
+                    clearInterval(timerInterval);
+                    alert('時間到！系統將自動交卷。');
+                    submitExam();
+                }
+            }, 1000);
+        }
+        
+        // 更新計時器顯示
+        function updateTimerDisplay() {
+            const minutes = Math.floor(remainingTime / 60);
+            const seconds = remainingTime % 60;
+            const timeText = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+            document.getElementById('timer-text').textContent = timeText;
+            
+            // 根據剩餘時間改變顏色
+            const timerDisplay = document.getElementById('timer-display');
+            if (remainingTime <= 60) {
+                timerDisplay.style.color = '#dc3545'; // 紅色
+            } else if (remainingTime <= 180) {
+                timerDisplay.style.color = '#ffc107'; // 黃色
+            } else {
+                timerDisplay.style.color = '#28a745'; // 綠色
+            }
+        }
+        
+        // 練習模式的顯示答案功能
+        function toggleAnswersPractice() {
+            const btn = document.getElementById('answer-toggle');
+            const currentSlideElement = document.querySelectorAll('.slide')[currentSlide];
+            const options = currentSlideElement.querySelectorAll('.option');
+            
+            if (btn.textContent === '顯示答案') {
+                // 顯示當前題的答案
+                options.forEach(opt => {
+                    if (opt.dataset.correct === 'true') {
+                        opt.style.background = '#d4edda';
+                        opt.style.borderColor = '#28a745';
+                        opt.style.fontWeight = 'bold';
+                    }
+                });
+                btn.textContent = '隱藏答案';
+                btn.style.background = '#ffc107';
+            } else {
+                // 隱藏答案
+                options.forEach(opt => {
+                    if (opt.dataset.correct === 'true' && !opt.classList.contains('selected')) {
+                        opt.style.background = 'white';
+                        opt.style.borderColor = 'transparent';
+                        opt.style.fontWeight = 'normal';
+                    }
+                });
+                btn.textContent = '顯示答案';
+                btn.style.background = '#28a745';
+            }
+        }
+        
         // 交卷
         function submitExam() {
+            // 停止計時器
+            if (timerInterval) {
+                clearInterval(timerInterval);
+                timerInterval = null;
+            }
+            
             const answeredCount = Object.keys(userAnswers).length;
             
             if (answeredCount === 0) {
